@@ -1,6 +1,5 @@
 import os
-from flask import Flask, request, jsonify
-from requests import Response
+from flask import Flask, request, jsonify, Response
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
@@ -26,7 +25,6 @@ def get_playlist_info(playlist_id):
         tracks.append((track_name, track_url, track_cover))
     
     return playlist_data['name'], playlist_cover, tracks
-
 @app.route('/')
 def playlist_info():
     playlist_id = request.args.get('id')
@@ -36,16 +34,43 @@ def playlist_info():
     try:
         playlist_name, playlist_cover, tracks = get_playlist_info(playlist_id)
         
-        output = f"Playlist: {playlist_name}\n"
-        output += f"Playlist Cover: {playlist_cover}\n\n"
-        output += "Tracks:\n"
+        html_template = """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Playlist</title>
+            <style>
+                body { font-family: Arial, sans-serif; }
+                .playlist-cover { width: 200px; }
+                .track-cover { width: 100px; }
+            </style>
+        </head>
+        <body>
+            <h1>Playlist: {playlist_name}</h1>
+            <img src="{playlist_cover}" alt="Playlist Cover" class="playlist-cover"><br><br>
+            <h2>Tracks:</h2>
+            <ol>
+                {tracks_html}
+            </ol>
+        </body>
+        </html>
+        """
         
-        for i, (name, url, cover) in enumerate(tracks, 1):
-            output += f"{i}. {name}\n"
-            output += f"   Link: <a href='{url}'>{url}</a>\n"
-            output += f"   Cover: <a href='{cover}'>{cover}</a>\n\n"
-
-        return Response(output, mimetype='text/plain')
+        tracks_html = ""
+        for name, url, cover in tracks:
+            tracks_html += f"<li><strong>{name}</strong><br>"
+            tracks_html += f"<a href='{url}'>{url}</a><br>"
+            tracks_html += f"<img src='{cover}' alt='Track Cover' class='track-cover'></li>"
+        
+        output = html_template.format(
+            playlist_name=playlist_name,
+            playlist_cover=playlist_cover,
+            tracks_html=tracks_html
+        )
+        
+        return Response(output, mimetype='text/html')
     except Exception as e:
         return f"Error: {str(e)}", 500
 

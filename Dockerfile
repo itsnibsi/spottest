@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . /app
 
 # Install the required packages
-RUN pip install --no-cache-dir flask spotipy gunicorn
+RUN pip install -r requirements.txt
 
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
